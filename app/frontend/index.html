@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frontend</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f8; color: #222; margin: 0; padding: 40px 16px; }
+    main { max-width: 640px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    h1 { font-size: 22px; margin-top: 0; }
+    dt { font-weight: bold; margin-top: 12px; }
+    dd { margin: 4px 0 0; }
+    pre { background: #f0f0f0; padding: 12px; border-radius: 4px; overflow-x: auto; }
+    .error { color: #b00020; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Laboratorio de aprovisionamiento — Frontend</h1>
+    <dl>
+      <dt>Backend</dt><dd id="url"></dd>
+      <dt>Ambiente</dt><dd id="ambiente">cargando...</dd>
+      <dt>Instancia que respondió</dt><dd id="instancia">cargando...</dd>
+      <dt>Base de datos</dt><dd id="bd">cargando...</dd>
+    </dl>
+    <pre id="detalle"></pre>
+  </main>
+  <script>
+    // El backend siempre está en el puerto del frontend + 1
+    const api = location.protocol + "//" + location.hostname + ":" + (Number(location.port) + 1);
+    document.getElementById("url").textContent = api;
+
+    function error(id, mensaje) {
+      const el = document.getElementById(id);
+      el.textContent = mensaje;
+      el.className = "error";
+    }
+
+    Promise.all([
+      fetch(api + "/").then(r => r.json()),
+      fetch(api + "/db").then(r => r.json())
+    ]).then(([info, bd]) => {
+      document.getElementById("ambiente").textContent = info.ambiente;
+      document.getElementById("instancia").textContent = info.instancia;
+      document.getElementById("bd").textContent = bd.bd + (bd.error ? " (" + bd.error + ")" : "");
+      document.getElementById("detalle").textContent = JSON.stringify({ api: info, db: bd }, null, 2);
+    }).catch(() => {
+      ["ambiente", "instancia", "bd"].forEach(id => error(id, "sin respuesta"));
+      error("detalle", "No se pudo conectar con el backend en " + api);
+    });
+  </script>
+</body>
+</html>
